@@ -51,18 +51,18 @@ file can't be found.
 To fix this, we'll copy the required file into our Google Drive account.
 
 1. Log into Google Drive.
-2. In Google Drive, make a folder named **data**, with a subfolder named
-   **cornell**.
+2. In Google Drive, make a folder named ``data``, with a subfolder named
+   ``cornell``.
 3. Visit the Cornell Movie Dialogs Corpus and download the movie-corpus ZIP file.
 4. Unzip the file on your local machine.
-5. Copy the file **utterances.jsonl** to the **data/cornell** folder that you
+5. Copy the file ``utterances.jsonl`` to the ``data/cornell`` folder that you
    created in Google Drive.
 
 Now we'll need to edit the file in\_ \_Colab to point to the file on
 Google Drive.
 
 In Colab, add the following to top of the code section over the line
-that begins *corpus\_name*:
+that begins ``corpus\_name``:
 
 ::
 
@@ -71,8 +71,8 @@ that begins *corpus\_name*:
 
 Change the two lines that follow:
 
-1. Change the **corpus\_name** value to **"cornell"**.
-2. Change the line that begins with **corpus** to this:
+1. Change the ``corpus\_name`` value to ``"cornell"``.
+2. Change the line that begins with ``corpus`` to this:
 
 ::
 
@@ -93,3 +93,11 @@ Hopefully this example will give you a good starting point for running
 some of the more complex tutorials in Colab. As we evolve our use of
 Colab on the PyTorch tutorials site, we'll look at ways to make this
 easier for users.
+
+Enabling CUDA
+~~~~~~~~~~~~~~~~
+Some tutorials require a CUDA-enabled device (NVIDIA GPU), which involves
+changing the Runtime type prior to executing the tutorial.
+To change the Runtime in Google Colab, on the top drop-down menu select **Runtime**,
+then select **Change runtime type**. Under **Hardware accelerator**, select ``T4 GPU``,
+then click ``Save``.
