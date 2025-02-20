@@ -311,9 +311,7 @@ class LSTMTagger(torch.nn.Module):
 # ``TransformerDecoder``) and subcomponents (``TransformerEncoderLayer``,
 # ``TransformerDecoderLayer``). For details, check out the
 # `documentation <https://pytorch.org/docs/stable/nn.html#transformer-layers>`__
-# on transformer classes, and the relevant
-# `tutorial <https://pytorch.org/tutorials/beginner/transformer_tutorial.html>`__
-# on pytorch.org.
+# on transformer classes.
 # 
 # Other Layers and Functions
 # --------------------------
@@ -342,7 +340,7 @@ print(maxpool_layer(my_tensor))
 # the 6x6 input.
 # 
 # **Normalization layers** re-center and normalize the output of one layer
-# before feeding it to another. Centering the and scaling the intermediate
+# before feeding it to another. Centering and scaling the intermediate
 # tensors has a number of beneficial effects, such as letting you use
 # higher learning rates without exploding/vanishing gradients.
 # 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-torch.compile Tutorial
-================
+Introduction to ``torch.compile``
+=================================
 **Author:** William Wen
 """
 
@@ -11,20 +11,17 @@ torch.compile Tutorial
 # ``torch.compile`` makes PyTorch code run faster by
 # JIT-compiling PyTorch code into optimized kernels,
 # all while requiring minimal code changes.
-# 
+#
 # In this tutorial, we cover basic ``torch.compile`` usage,
 # and demonstrate the advantages of ``torch.compile`` over
 # previous PyTorch compiler solutions, such as
-# `TorchScript <https://pytorch.org/docs/stable/jit.html>`__ and 
+# `TorchScript <https://pytorch.org/docs/stable/jit.html>`__ and
 # `FX Tracing <https://pytorch.org/docs/stable/fx.html#torch.fx.symbolic_trace>`__.
 #
 # **Contents**
-# 
-# - Basic Usage
-# - Demonstrating Speedups
-# - Comparison to TorchScript and FX Tracing
-# - TorchDynamo and FX Graphs
-# - Conclusion
+#
+# .. contents::
+#     :local:
 #
 # **Required pip Dependencies**
 #
@@ -33,17 +30,33 @@ torch.compile Tutorial
 # - ``numpy``
 # - ``scipy``
 # - ``tabulate``
-#
-# Note: a modern NVIDIA GPU (Volta or Ampere) is recommended for this tutorial.
-#
+
+######################################################################
+# NOTE: a modern NVIDIA GPU (H100, A100, or V100) is recommended for this tutorial in
+# order to reproduce the speedup numbers shown below and documented elsewhere.
+
+import torch
+import warnings
+
+gpu_ok = False
+if torch.cuda.is_available():
+    device_cap = torch.cuda.get_device_capability()
+    if device_cap in ((7, 0), (8, 0), (9, 0)):
+        gpu_ok = True
+
+if not gpu_ok:
+    warnings.warn(
+        "GPU is not NVIDIA V100, A100, or H100. Speedup numbers may be lower "
+        "than expected."
+    )
 
 ######################################################################
 # Basic Usage
 # ------------
 #
-# ``torch.compile`` is included in the latest PyTorch nightlies.
+# ``torch.compile`` is included in the latest PyTorch.
 # Running TorchInductor on GPU requires Triton, which is included with the PyTorch 2.0 nightly
-# binary. If Triton is still missing, try installing ``torchtriton`` via pip 
+# binary. If Triton is still missing, try installing ``torchtriton`` via pip
 # (``pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu117"``
 # for CUDA 11.7).
 #
@@ -51,27 +64,29 @@ torch.compile Tutorial
 # ``torch.compile``. We can then call the returned optimized
 # function in place of the original function.
 
-import torch
-
 def foo(x, y):
     a = torch.sin(x)
-    b = torch.cos(x)
+    b = torch.cos(y)
     return a + b
 opt_foo1 = torch.compile(foo)
 print(opt_foo1(torch.randn(10, 10), torch.randn(10, 10)))
 
 ######################################################################
 # Alternatively, we can decorate the function.
+t1 = torch.randn(10, 10)
+t2 = torch.randn(10, 10)
 
 @torch.compile
 def opt_foo2(x, y):
     a = torch.sin(x)
-    b = torch.cos(x)
+    b = torch.cos(y)
     return a + b
-print(opt_foo2(torch.randn(10, 10), torch.randn(10, 10)))
+print(opt_foo2(t1, t2))
 
 ######################################################################
 # We can also optimize ``torch.nn.Module`` instances.
+
+t = torch.randn(10, 100)
 
 class MyModule(torch.nn.Module):
     def __init__(self):
@@ -83,15 +98,109 @@ class MyModule(torch.nn.Module):
 
 mod = MyModule()
 opt_mod = torch.compile(mod)
-print(opt_mod(torch.randn(10, 100)))
+print(opt_mod(t))
+
+######################################################################
+# torch.compile and Nested Calls
+# ------------------------------
+# Nested function calls within the decorated function will also be compiled.
+
+def nested_function(x):
+    return torch.sin(x)
+
+@torch.compile
+def outer_function(x, y):
+    a = nested_function(x)
+    b = torch.cos(y)
+    return a + b
+
+print(outer_function(t1, t2))
+
+######################################################################
+# In the same fashion, when compiling a module all sub-modules and methods
+# within it, that are not in a skip list, are also compiled.
+
+class OuterModule(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.inner_module = MyModule()
+        self.outer_lin = torch.nn.Linear(10, 2)
+
+    def forward(self, x):
+        x = self.inner_module(x)
+        return torch.nn.functional.relu(self.outer_lin(x))
+
+outer_mod = OuterModule()
+opt_outer_mod = torch.compile(outer_mod)
+print(opt_outer_mod(t))
+
+######################################################################
+# We can also disable some functions from being compiled by using
+# ``torch.compiler.disable``. Suppose you want to disable the tracing on just
+# the ``complex_function`` function, but want to continue the tracing back in
+# ``complex_conjugate``. In this case, you can use
+# ``torch.compiler.disable(recursive=False)`` option. Otherwise, the default is
+# ``recursive=True``.
+
+def complex_conjugate(z):
+    return torch.conj(z)
+
+@torch.compiler.disable(recursive=False)
+def complex_function(real, imag):
+    # Assuming this function cause problems in the compilation
+    z = torch.complex(real, imag)
+    return complex_conjugate(z)
+
+def outer_function():
+    real = torch.tensor([2, 3], dtype=torch.float32)
+    imag = torch.tensor([4, 5], dtype=torch.float32)
+    z = complex_function(real, imag)
+    return torch.abs(z)
+
+# Try to compile the outer_function
+try:
+    opt_outer_function = torch.compile(outer_function)
+    print(opt_outer_function())
+except Exception as e:
+    print("Compilation of outer_function failed:", e)
+
+######################################################################
+# Best Practices and Recommendations
+# ----------------------------------
+#
+# Behavior of ``torch.compile`` with Nested Modules and Function Calls
+#
+# When you use ``torch.compile``, the compiler will try to recursively compile
+# every function call inside the target function or module inside the target
+# function or module that is not in a skip list (such as built-ins, some functions in
+# the torch.* namespace).
+# 
+# **Best Practices:**
+#
+# 1. **Top-Level Compilation:** One approach is to compile at the highest level
+# possible (i.e., when the top-level module is initialized/called) and
+# selectively disable compilation when encountering excessive graph breaks or
+# errors. If there are still many compile issues, compile individual
+# subcomponents instead.
+#
+# 2. **Modular Testing:** Test individual functions and modules with ``torch.compile``
+# before integrating them into larger models to isolate potential issues.
+#
+# 3. **Disable Compilation Selectively:** If certain functions or sub-modules
+# cannot be handled by `torch.compile`, use the `torch.compiler.disable` context
+# managers to recursively exclude them from compilation.
+#
+# 4. **Compile Leaf Functions First:** In complex models with multiple nested
+# functions and modules, start by compiling the leaf functions or modules first.
+# For more information see `TorchDynamo APIs for fine-grained tracing <https://pytorch.org/docs/stable/torch.compiler_fine_grain_apis.html>`__.
 
 ######################################################################
 # Demonstrating Speedups
 # -----------------------
 #
 # Let's now demonstrate that using ``torch.compile`` can speed
-# up real models. We will compare standard eager mode and 
-# ``torch.compile`` by evaluating and training ResNet-18 on random data.
+# up real models. We will compare standard eager mode and
+# ``torch.compile`` by evaluating and training a ``torchvision`` model on random data.
 #
 # Before we start, we need to define some utility functions.
 
@@ -117,18 +226,15 @@ def generate_data(b):
 
 N_ITERS = 10
 
-from torchvision.models import resnet18
+from torchvision.models import densenet121
 def init_model():
-    return resnet18().to(torch.float32).cuda()
+    return densenet121().to(torch.float32).cuda()
 
 ######################################################################
 # First, let's compare inference.
 #
-# Note that in the call to ``torch.compile``, we have have the additional
-# ``mode`` kwarg, which we will discuss below.
-
-def evaluate(mod, inp):
-    return mod(inp)
+# Note that in the call to ``torch.compile``, we have the additional
+# ``mode`` argument, which we will discuss below.
 
 model = init_model()
 
@@ -136,11 +242,12 @@ model = init_model()
 import torch._dynamo
 torch._dynamo.reset()
 
-evaluate_opt = torch.compile(evaluate, mode="reduce-overhead")
+model_opt = torch.compile(model, mode="reduce-overhead")
 
 inp = generate_data(16)[0]
-print("eager:", timed(lambda: evaluate(model, inp))[1])
-print("compile:", timed(lambda: evaluate_opt(model, inp))[1])
+with torch.no_grad():
+    print("eager:", timed(lambda: model(inp))[1])
+    print("compile:", timed(lambda: model_opt(inp))[1])
 
 ######################################################################
 # Notice that ``torch.compile`` takes a lot longer to complete
@@ -151,10 +258,10 @@ print("compile:", timed(lambda: evaluate_opt(model, inp))[1])
 # see a significant improvement compared to eager.
 
 eager_times = []
-compile_times = []
 for i in range(N_ITERS):
     inp = generate_data(16)[0]
-    _, eager_time = timed(lambda: evaluate(model, inp))
+    with torch.no_grad():
+        _, eager_time = timed(lambda: model(inp))
     eager_times.append(eager_time)
     print(f"eager eval time {i}: {eager_time}")
 
@@ -163,7 +270,8 @@ print("~" * 10)
 compile_times = []
 for i in range(N_ITERS):
     inp = generate_data(16)[0]
-    _, compile_time = timed(lambda: evaluate_opt(model, inp))
+    with torch.no_grad():
+        _, compile_time = timed(lambda: model_opt(inp))
     compile_times.append(compile_time)
     print(f"compile eval time {i}: {compile_time}")
 print("~" * 10)
@@ -172,6 +280,7 @@ import numpy as np
 eager_med = np.median(eager_times)
 compile_med = np.median(compile_times)
 speedup = eager_med / compile_med
+assert(speedup > 1)
 print(f"(eval) eager median: {eager_med}, compile median: {compile_med}, speedup: {speedup}x")
 print("~" * 10)
 
@@ -184,10 +293,14 @@ print("~" * 10)
 # GPU compute and the observed speedup may be less significant.
 #
 # You may also see different speedup results depending on the chosen ``mode``
-# kwarg. Since our model and data are small, we want to reduce overhead as
-# much as possible, and so we chose ``"reduce-overhead"``. For your own models,
+# argument. The ``"reduce-overhead"`` mode uses CUDA graphs to further reduce
+# the overhead of Python. For your own models,
 # you may need to experiment with different modes to maximize speedup. You can
 # read more about modes `here <https://pytorch.org/get-started/pytorch-2.0/#user-experience>`__.
+#
+# You may might also notice that the second time we run our model with ``torch.compile`` is significantly
+# slower than the other runs, although it is much faster than the first run. This is because the ``"reduce-overhead"``
+# mode runs a few warm-up iterations for CUDA graphs.
 #
 # For general PyTorch benchmarking, you can try using ``torch.utils.benchmark`` instead of the ``timed``
 # function we defined above. We wrote our own timing function in this tutorial to show
@@ -228,6 +341,7 @@ print("~" * 10)
 eager_med = np.median(eager_times)
 compile_med = np.median(compile_times)
 speedup = eager_med / compile_med
+assert(speedup > 1)
 print(f"(train) eager median: {eager_med}, compile median: {compile_med}, speedup: {speedup}x")
 print("~" * 10)
 
@@ -235,11 +349,15 @@ print("~" * 10)
 # Again, we can see that ``torch.compile`` takes longer in the first
 # iteration, as it must compile the model, but in subsequent iterations, we see
 # significant speedups compared to eager.
+#
+# We remark that the speedup numbers presented in this tutorial are for
+# demonstration purposes only. Official speedup values can be seen at the
+# `TorchInductor performance dashboard <https://hud.pytorch.org/benchmark/compilers>`__.
 
 ######################################################################
 # Comparison to TorchScript and FX Tracing
 # -----------------------------------------
-# 
+#
 # We have seen that ``torch.compile`` can speed up PyTorch code.
 # Why else should we use ``torch.compile`` over existing PyTorch
 # compiler solutions, such as TorchScript or FX Tracing? Primarily, the
@@ -247,7 +365,7 @@ print("~" * 10)
 # arbitrary Python code with minimal changes to existing code.
 #
 # One case that ``torch.compile`` can handle that other compiler
-# solutions struggle with is data-dependent control flow (the 
+# solutions struggle with is data-dependent control flow (the
 # ``if x.sum() < 0:`` line below).
 
 def f1(x, y):
@@ -385,7 +503,7 @@ print("compile 3:", test_fns(f3, compile_f3, (inp2,)))
 # `FX graphs <https://pytorch.org/docs/stable/fx.html#torch.fx.Graph>`__, which can
 # then be further optimized. TorchDynamo extracts FX graphs by analyzing Python bytecode
 # during runtime and detecting calls to PyTorch operations.
-# 
+#
 # Normally, TorchInductor, another component of ``torch.compile``,
 # further compiles the FX graphs into optimized kernels,
 # but TorchDynamo allows for different backends to be used. In order to inspect
@@ -449,10 +567,8 @@ opt_bar(inp1, -inp2)
 
 # Reset since we are using a different backend.
 torch._dynamo.reset()
-explanation, out_guards, graphs, ops_per_graph, break_reasons, explanation_verbose = torch._dynamo.explain(
-    bar, torch.randn(10), torch.randn(10)
-)
-print(explanation_verbose)
+explain_output = torch._dynamo.explain(bar)(torch.randn(10), torch.randn(10))
+print(explain_output)
 
 ######################################################################
 # In order to maximize speedup, graph breaks should be limited.
@@ -473,17 +589,12 @@ opt_model = torch.compile(init_model(), fullgraph=True)
 print(opt_model(generate_data(16)[0]))
 
 ######################################################################
-# Finally, if we simply want TorchDynamo to output the FX graph for export,
-# we can use ``torch._dynamo.export``. Note that ``torch._dynamo.export``, like
-# ``fullgraph=True``, raises an error if TorchDynamo breaks the graph.
-
-try:
-    torch._dynamo.export(bar, torch.randn(10), torch.randn(10))
-except:
-    tb.print_exc()
-
-model_exp = torch._dynamo.export(init_model(), generate_data(16)[0])
-print(model_exp[0](generate_data(16)[0]))
+# We can use ``torch.export`` (from PyTorch 2.1+) to extract a single, exportable
+# FX graph from the input PyTorch program. The exported graph is intended to be
+# run on different (i.e. Python-less) environments. One important restriction
+# is that the ``torch.export`` does not support graph breaks. Please check
+# `this tutorial <https://pytorch.org/tutorials/intermediate/torch_export_tutorial.html>`__
+# for more details on ``torch.export``.
 
 ######################################################################
 # Conclusion

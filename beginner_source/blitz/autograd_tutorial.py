@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 A Gentle Introduction to ``torch.autograd``
----------------------------------
+===========================================
 
 ``torch.autograd`` is PyTorch’s automatic differentiation engine that powers
 neural network training. In this section, you will get a conceptual
@@ -40,7 +40,7 @@ and its corresponding ``label`` initialized to some random values. Label in pret
 shape (1,1000).
 
 .. note::
-    This tutorial work only on CPU and will not work on GPU (even if tensors are moved to CUDA).
+    This tutorial works only on the CPU and will not work on GPU devices (even if tensors are moved to CUDA).
 
 """
 import torch
@@ -149,7 +149,7 @@ print(-2*b == b.grad)
 
 ######################################################################
 # Optional Reading - Vector Calculus using ``autograd``
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
 # Mathematically, if you have a vector valued function
 # :math:`\vec{y}=f(\vec{x})`, then the gradient of :math:`\vec{y}` with
@@ -191,7 +191,7 @@ print(-2*b == b.grad)
 # .. math::
 #
 #
-#      J^{T}\cdot \vec{v}=\left(\begin{array}{ccc}
+#      J^{T}\cdot \vec{v} = \left(\begin{array}{ccc}
 #       \frac{\partial y_{1}}{\partial x_{1}} & \cdots & \frac{\partial y_{m}}{\partial x_{1}}\\
 #       \vdots & \ddots & \vdots\\
 #       \frac{\partial y_{1}}{\partial x_{n}} & \cdots & \frac{\partial y_{m}}{\partial x_{n}}
@@ -199,7 +199,7 @@ print(-2*b == b.grad)
 #       \frac{\partial l}{\partial y_{1}}\\
 #       \vdots\\
 #       \frac{\partial l}{\partial y_{m}}
-#       \end{array}\right)=\left(\begin{array}{c}
+#       \end{array}\right) = \left(\begin{array}{c}
 #       \frac{\partial l}{\partial x_{1}}\\
 #       \vdots\\
 #       \frac{\partial l}{\partial x_{n}}
@@ -207,7 +207,6 @@ print(-2*b == b.grad)
 #
 # This characteristic of vector-Jacobian product is what we use in the above example;
 # ``external_grad`` represents :math:`\vec{v}`.
-#
 
 
 
@@ -266,7 +265,7 @@ y = torch.rand(5, 5)
 z = torch.rand((5, 5), requires_grad=True)
 
 a = x + y
-print(f"Does `a` require gradients? : {a.requires_grad}")
+print(f"Does `a` require gradients?: {a.requires_grad}")
 b = x + z
 print(f"Does `b` require gradients?: {b.requires_grad}")
 
@@ -321,3 +320,4 @@ optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
 #
 # -  `In-place operations & Multithreaded Autograd <https://pytorch.org/docs/stable/notes/autograd.html>`__
 # -  `Example implementation of reverse-mode autodiff <https://colab.research.google.com/drive/1VpeE6UvEPRz9HmsHh1KS0XxXjYu533EC>`__
+# -  `Video: PyTorch Autograd Explained - In-depth Tutorial <https://www.youtube.com/watch?v=MswxJw-8PvE>`__

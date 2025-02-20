@@ -204,7 +204,7 @@ We'll compare the following three configurations:
 
 (2) `torch.set_num_threads <https://pytorch.org/docs/stable/generated/torch.set_num_threads.html>`_ = ``number of physical cores / number of workers`` (no core pinning)
 
-(3) core pinning via the launch script 
+(3) core pinning via the launch script (Required Torchserve>=0.6.1)
 
 After this exercise, we'll have verified that we prefer avoiding logical cores and prefer local memory access via core pinning with a real TorchServe use case. 
 
@@ -265,7 +265,7 @@ Additionally, notice that thread (TID:97097) was executing on a large number of 
 Compare local vs. remote memory access over time. We observe that about half, 51.09%, of the memory accesses were remote accesses, indicating sub-optimal NUMA configuration. 
 
 2. torch.set_num_threads = ``number of physical cores / number of workers`` (no core pinning) 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For an apple-to-apple comparison with launcher's core pinning, we'll set the number of threads to the number of cores divided by the number of workers (launcher does this internally). Add the following code snippet in the `base_handler <https://github.com/pytorch/serve/blob/master/ts/torch_handler/base_handler.py>`_:
 
@@ -379,8 +379,8 @@ For interested readers, please check out the following documents:
 
 - `CPU specific optimizations <https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html#cpu-specific-optimizations>`_
 - `Maximize Performance of Intel® Software Optimization for PyTorch* on CPU <https://www.intel.com/content/www/us/en/developer/articles/technical/how-to-get-better-performance-on-pytorchcaffe2-with-intel-acceleration.html>`_
-- `Performance Tuning Guide <https://intel.github.io/intel-extension-for-pytorch/tutorials/performance_tuning/tuning_guide.html>`_
-- `Launch Script Usage Guide <https://intel.github.io/intel-extension-for-pytorch/tutorials/performance_tuning/launch_script.html>`_
+- `Performance Tuning Guide <https://intel.github.io/intel-extension-for-pytorch/cpu/latest/tutorials/performance_tuning/tuning_guide.html>`_
+- `Launch Script Usage Guide <https://intel.github.io/intel-extension-for-pytorch/cpu/latest/tutorials/performance_tuning/launch_script.html>`_
 - `Top-down Microarchitecture Analysis Method <https://www.intel.com/content/www/us/en/develop/documentation/vtune-cookbook/top/methodologies/top-down-microarchitecture-analysis-method.html>`_
 - `Configuring oneDNN for Benchmarking <https://oneapi-src.github.io/oneDNN/dev_guide_performance_settings.html#benchmarking-settings>`_
 - `Intel® VTune™ Profiler <https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html#gs.tcbgpa>`_
