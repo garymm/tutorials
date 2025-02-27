@@ -115,7 +115,7 @@ print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
 
 ########################################################################
 # 2. Define a Convolutional Neural Network
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Copy the neural network from the Neural Networks section before and modify it to
 # take 3-channel images (instead of 1-channel images as it was defined).
 
@@ -221,7 +221,7 @@ print('GroundTruth: ', ' '.join(f'{classes[labels[j]]:5s}' for j in range(4)))
 # wasn't necessary here, we only did it to illustrate how to do so):
 
 net = Net()
-net.load_state_dict(torch.load(PATH))
+net.load_state_dict(torch.load(PATH, weights_only=True))
 
 ########################################################################
 # Okay, now let us see what the neural network thinks these examples above are:
@@ -252,7 +252,7 @@ with torch.no_grad():
         # calculate outputs by running images through the network
         outputs = net(images)
         # the class with the highest energy is what we choose as prediction
-        _, predicted = torch.max(outputs.data, 1)
+        _, predicted = torch.max(outputs, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 

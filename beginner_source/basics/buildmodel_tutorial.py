@@ -10,7 +10,7 @@
 `Save & Load Model <saveloadrun_tutorial.html>`_
 
 Build the Neural Network
-===================
+========================
 
 Neural networks comprise of layers/modules that perform operations on data.
 The `torch.nn <https://pytorch.org/docs/stable/nn.html>`_ namespace provides all the building blocks you need to
@@ -32,17 +32,10 @@ from torchvision import datasets, transforms
 #############################################
 # Get Device for Training
 # -----------------------
-# We want to be able to train our model on a hardware accelerator like the GPU or MPS,
-# if available. Let's check to see if `torch.cuda <https://pytorch.org/docs/stable/notes/cuda.html>`_
-# or `torch.backends.mps <https://pytorch.org/docs/stable/notes/mps.html>`_ are available, otherwise we use the CPU.
+# We want to be able to train our model on an `accelerator <https://pytorch.org/docs/stable/torch.html#accelerators>`__
+# such as CUDA, MPS, MTIA, or XPU. If the current accelerator is available, we will use it. Otherwise, we use the CPU.
 
-device = (
-    "cuda"
-    if torch.cuda.is_available()
-    else "mps"
-    if torch.backends.mps.is_available()
-    else "cpu"
-)
+device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
 print(f"Using {device} device")
 
 ##############################################
@@ -197,5 +190,5 @@ for name, param in model.named_parameters():
 
 #################################################################
 # Further Reading
-# --------------
+# -----------------
 # - `torch.nn API <https://pytorch.org/docs/stable/nn.html>`_
