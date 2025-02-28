@@ -1,3 +1,6 @@
+.. note::
+    PyTorch Vulkan Backend is no longer maintained. Please review the `ExecuTorch Vulkan Delegate <https://pytorch.org/executorch/stable/native-delegates-executorch-vulkan-delegate.html>`_ implementation instead.
+
 PyTorch Vulkan Backend User Workflow
 ====================================
 
@@ -182,7 +185,7 @@ Python API
 ``.vulkan()`` at the moment of writing of this tutorial is not exposed to Python API, but it is planned to be there.
 
 Android Java API
----------------
+----------------
 
 For Android API to run model on Vulkan backend we have to specify this during model loading:
 

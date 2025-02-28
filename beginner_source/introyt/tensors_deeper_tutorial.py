@@ -44,7 +44,7 @@ print(x)
 
 
 ##########################################################################
-# Let’s unpack what we just did:
+# Let’s upack what we just did:
 # 
 # -  We created a tensor using one of the numerous factory methods
 #    attached to the ``torch`` module.
@@ -85,7 +85,7 @@ print(random)
 
 
 #########################################################################
-# The factory methods all do just what you’d expect - we have a tensor
+# The fctory methods all do just what you’d expect - we have a tensor
 # full of zeros, another full of ones, and another with random values
 # between 0 and 1.
 # 
@@ -228,18 +228,7 @@ print(c)
 # integer with the ``.to()`` method. Note that ``c`` contains all the same
 # values as ``b``, but truncated to integers.
 # 
-# Available data types include:
-# 
-# -  ``torch.bool``
-# -  ``torch.int8``
-# -  ``torch.uint8``
-# -  ``torch.int16``
-# -  ``torch.int32``
-# -  ``torch.int64``
-# -  ``torch.half``
-# -  ``torch.float``
-# -  ``torch.double``
-# -  ``torch.bfloat``
+# For more information, see the `data types documentation <https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype>`__.
 # 
 # Math & Logic with PyTorch Tensors
 # ---------------------------------
@@ -292,14 +281,14 @@ print(dozens)
 # binary operation on tensors if dissimilar shape?
 # 
 # .. note::
-#      The following cell throws a run-time error. This is intentional.
+#    The following cell throws a run-time error. This is intentional.
 #
-# ::
+#    .. code-block:: sh
 #
-#    a = torch.rand(2, 3)
-#    b = torch.rand(3, 2)
+#       a = torch.rand(2, 3)
+#       b = torch.rand(3, 2)
 #
-#    print(a * b)
+#       print(a * b)
 #
 
 
@@ -378,7 +367,7 @@ print(d)
 #
 # -  The multiplication operation that created ``b`` was 
 #    broadcast over every “layer” of ``a``.
-# -  For ``c``, the operation was broadcast over ever layer and row of
+# -  For ``c``, the operation was broadcast over every layer and row of
 #    ``a`` - every 3-element column is identical. 
 # -  For ``d``, we switched it around - now every *row* is identical,
 #    across layers and columns.
@@ -390,17 +379,17 @@ print(d)
 # Here are some examples of attempts at broadcasting that will fail:
 # 
 # .. note::
-#       The following cell throws a run-time error. This is intentional.
+#    The following cell throws a run-time error. This is intentional.
 #
-# ::
+#    .. code-block:: python
 #
-#    a =     torch.ones(4, 3, 2)
+#       a =     torch.ones(4, 3, 2)
 #
-#    b = a * torch.rand(4, 3)    # dimensions must match last-to-first
+#       b = a * torch.rand(4, 3)    # dimensions must match last-to-first
 #
-#    c = a * torch.rand(   2, 3) # both 3rd & 2nd dims different
+#       c = a * torch.rand(   2, 3) # both 3rd & 2nd dims different
 #
-#    d = a * torch.rand((0, ))   # can't broadcast with an empty tensor
+#       d = a * torch.rand((0, ))   # can't broadcast with an empty tensor
 #
 
 
@@ -459,17 +448,19 @@ m1 = torch.rand(2, 2)                   # random matrix
 m2 = torch.tensor([[3., 0.], [0., 3.]]) # three times identity matrix
 
 print('\nVectors & Matrices:')
-print(torch.cross(v2, v1)) # negative of z unit vector (v1 x v2 == -v2 x v1)
+print(torch.linalg.cross(v2, v1)) # negative of z unit vector (v1 x v2 == -v2 x v1)
 print(m1)
-m3 = torch.matmul(m1, m2)
+m3 = torch.linalg.matmul(m1, m2)
 print(m3)                  # 3 times m1
-print(torch.svd(m3))       # singular value decomposition
+print(torch.linalg.svd(m3))       # singular value decomposition
 
 
 ##################################################################################
 # This is a small sample of operations. For more details and the full inventory of
 # math functions, have a look at the
 # `documentation <https://pytorch.org/docs/stable/torch.html#math-operations>`__.
+# For more details and the full inventory of linear algebra operations, have a
+# look at this `documentation <https://pytorch.org/docs/stable/linalg.html>`__.
 # 
 # Altering Tensors in Place
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -544,11 +535,11 @@ d = torch.matmul(a, b, out=c)
 print(c)                # contents of c have changed
 
 assert c is d           # test c & d are same object, not just containing equal values
-assert id(c), old_id    # make sure that our new c is the same object as the old one
+assert id(c) == old_id  # make sure that our new c is the same object as the old one
 
 torch.rand(2, 2, out=c) # works for creation too!
 print(c)                # c has changed again
-assert id(c), old_id    # still the same object!
+assert id(c) == old_id  # still the same object!
 
 
 ##########################################################################
@@ -641,34 +632,33 @@ print(a)
 # does this *without* changing ``a`` - you can see that when we print
 # ``a`` again at the end, it retains its ``requires_grad=True`` property.
 # 
-# Moving to GPU
+# Moving to `Accelerator <https://pytorch.org/docs/stable/torch.html#accelerators>`__
 # -------------
 # 
-# One of the major advantages of PyTorch is its robust acceleration on
-# CUDA-compatible Nvidia GPUs. (“CUDA” stands for *Compute Unified Device
-# Architecture*, which is Nvidia’s platform for parallel computing.) So
-# far, everything we’ve done has been on CPU. How do we move to the faster
+# One of the major advantages of PyTorch is its robust acceleration on an
+# `accelerator <https://pytorch.org/docs/stable/torch.html#accelerators>`__
+# such as CUDA, MPS, MTIA, or XPU. 
+# So far, everything we’ve done has been on CPU. How do we move to the faster
 # hardware?
 # 
-# First, we should check whether a GPU is available, with the
+# First, we should check whether an accelerator is available, with the
 # ``is_available()`` method.
 # 
 # .. note::
-#      If you do not have a CUDA-compatible GPU and CUDA drivers
-#      installed, the executable cells in this section will not execute any
-#      GPU-related code.
+#      If you do not have an accelerator, the executable cells in this section will not execute any
+#      accelerator-related code.
 # 
 
-if torch.cuda.is_available():
-    print('We have a GPU!')
+if torch.accelerator.is_available():
+    print('We have an accelerator!')
 else:
     print('Sorry, CPU only.')
 
 
 ##########################################################################
-# Once we’ve determined that one or more GPUs is available, we need to put
-# our data someplace where the GPU can see it. Your CPU does computation
-# on data in your computer’s RAM. Your GPU has dedicated memory attached
+# Once we’ve determined that one or more accelerators is available, we need to put
+# our data someplace where the accelerator can see it. Your CPU does computation
+# on data in your computer’s RAM. Your accelerator has dedicated memory attached
 # to it. Whenever you want to perform a computation on a device, you must
 # move *all* the data needed for that computation to memory accessible by
 # that device. (Colloquially, “moving the data to memory accessible by the
@@ -678,8 +668,8 @@ else:
 # may do it at creation time:
 # 
 
-if torch.cuda.is_available():
-    gpu_rand = torch.rand(2, 2, device='cuda')
+if torch.accelerator.is_available():
+    gpu_rand = torch.rand(2, 2, device=torch.accelerator.current_accelerator())
     print(gpu_rand)
 else:
     print('Sorry, CPU only.')
@@ -687,25 +677,22 @@ else:
 
 ##########################################################################
 # By default, new tensors are created on the CPU, so we have to specify
-# when we want to create our tensor on the GPU with the optional
+# when we want to create our tensor on the accelerator with the optional
 # ``device`` argument. You can see when we print the new tensor, PyTorch
 # informs us which device it’s on (if it’s not on CPU).
 # 
-# You can query the number of GPUs with ``torch.cuda.device_count()``. If
-# you have more than one GPU, you can specify them by index:
+# You can query the number of accelerators with ``torch.accelerator.device_count()``. If
+# you have more than one accelerator, you can specify them by index, take CUDA for example:
 # ``device='cuda:0'``, ``device='cuda:1'``, etc.
 # 
 # As a coding practice, specifying our devices everywhere with string
 # constants is pretty fragile. In an ideal world, your code would perform
-# robustly whether you’re on CPU or GPU hardware. You can do this by
+# robustly whether you’re on CPU or accelerator hardware. You can do this by
 # creating a device handle that can be passed to your tensors instead of a
 # string:
 # 
 
-if torch.cuda.is_available():
-    my_device = torch.device('cuda')
-else:
-    my_device = torch.device('cpu')
+my_device = torch.accelerator.current_accelerator() if torch.accelerator.is_available() else torch.device('cpu')
 print('Device: {}'.format(my_device))
 
 x = torch.rand(2, 2, device=my_device)
@@ -727,12 +714,12 @@ y = y.to(my_device)
 # It is important to know that in order to do computation involving two or
 # more tensors, *all of the tensors must be on the same device*. The
 # following code will throw a runtime error, regardless of whether you
-# have a GPU device available:
+# have an accelerator device available, take CUDA for example:
 # 
-# ::
+# .. code-block:: python
 # 
 #    x = torch.rand(2, 2)
-#    y = torch.rand(2, 2, device='gpu')
+#    y = torch.rand(2, 2, device='cuda')
 #    z = x + y  # exception will be thrown
 # 
 
@@ -820,9 +807,9 @@ print(d.shape)
 # Another place you might use ``unsqueeze()`` is to ease broadcasting.
 # Recall the example above where we had the following code:
 # 
-# ::
+# .. code-block:: python
 # 
-#    a =     torch.ones(4, 3, 2)
+#    a = torch.ones(4, 3, 2)
 # 
 #    c = a * torch.rand(   3, 1) # 3rd dim = 1, 2nd dim identical to a
 #    print(c)
