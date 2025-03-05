@@ -22,26 +22,11 @@ Neural Network API
     import torch.nn as nn                     # neural networks
     import torch.nn.functional as F           # layers, activations and more
     import torch.optim as optim               # optimizers e.g. gradient descent, ADAM, etc.
-    from torch.jit import script, trace       # hybrid frontend decorator and tracing jit
 
 See `autograd <https://pytorch.org/docs/stable/autograd.html>`__,
 `nn <https://pytorch.org/docs/stable/nn.html>`__,
 `functional <https://pytorch.org/docs/stable/nn.html#torch-nn-functional>`__
 and `optim <https://pytorch.org/docs/stable/optim.html>`__
-
-Torchscript and JIT
----------------
-
-.. code-block:: python
-
-    torch.jit.trace()         # takes your module or function and an example 
-                              # data input, and traces the computational steps 
-                              # that the data encounters as it progresses through the model
-
-    @script                   # decorator used to indicate data-dependent 
-                              # control flow within the code being traced
-
-See `Torchscript <https://pytorch.org/docs/stable/jit.html>`__
 
 ONNX
 ----
@@ -225,8 +210,10 @@ Optimizers
 
     opt = optim.x(model.parameters(), ...)      # create optimizer
     opt.step()                                  # update weights
-    optim.X                                     # where X is SGD, Adadelta, Adagrad, Adam, 
-                                                # AdamW, SparseAdam, Adamax, ASGD, 
+    opt.zero_grad()                             # clear the gradients
+    optim.X                                     # where X is SGD, AdamW, Adam,
+                                                # Adafactor, NAdam, RAdam, Adadelta,
+                                                # Adagrad, SparseAdam, Adamax, ASGD,
                                                 # LBFGS, RMSprop or Rprop
 
 See `optimizers <https://pytorch.org/docs/stable/optim.html>`__
@@ -261,8 +248,8 @@ Datasets
 See
 `datasets <https://pytorch.org/docs/stable/data.html?highlight=dataset#torch.utils.data.Dataset>`__
 
-Dataloaders and DataSamplers
-----------------------------
+Dataloaders and ``DataSamplers``
+--------------------------------
 
 .. code-block:: python
 
@@ -283,9 +270,6 @@ Also see
 
 -  `Deep Learning with PyTorch: A 60 Minute
    Blitz <https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html>`__
-   *(pytorch.org)*
 -  `PyTorch Forums <https://discuss.pytorch.org/>`__
-   *(discuss.pytorch.org)*
 -  `PyTorch for Numpy
    users <https://github.com/wkentaro/pytorch-for-numpy-users>`__
-   *(github.com/wkentaro/pytorch-for-numpy-users)*
